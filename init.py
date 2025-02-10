@@ -3,11 +3,16 @@ import os
 import requests
 import json
 import time
+import hashlib
+from discord_webhook import DiscordWebhook
 
 load_dotenv()
 
 CANVAS_TOKEN = os.getenv("CANVAS_TOKEN")
 USER_ID = os.getenv("USER_ID")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+
+CONFERENCE_CACHE_FILE = ".conference_cache.json"
 
 COURSES_API = "https://tip.instructure.com/api/v1/courses?per_page=100"
 CONFERENCES_API = "https://tip.instructure.com/api/v1/courses/{course_id}/conferences"
@@ -24,7 +29,19 @@ HEADERS = {"Authorization": "Bearer {key}".format(key=CANVAS_TOKEN)}
 course_response = requests.get(COURSES_API, headers=HEADERS, params=COURSES_PARAMETERS)
 courses_data = json.loads(course_response.text)
 
+conference_cache = {}
+try:
+    with open(CONFERENCE_CACHE_FILE, 'r') as file:
+        conference_cache = json.load(file)
+except:
+    print("No conference cache file, creating")
+    file = open(CONFERENCE_CACHE_FILE, "w")
+    file.write("{}")
+    file.close()
+
 def queryOngoingConferences():
+    conference_detected = False
+
     for course in courses_data:
         course_id = course["id"]
 
@@ -32,13 +49,35 @@ def queryOngoingConferences():
         conference_response = requests.get(conference_url, headers=HEADERS)
         conferences_rawdata = json.loads(conference_response.text)
 
+        if str(course_id) not in conference_cache:
+            print(conference_cache)
+            conference_cache[str(course_id)] = ""
+
         if "conferences" in conferences_rawdata:
             conferences_data = conferences_rawdata["conferences"]
 
             latest_conference = conferences_data[0]
-            if (conferences_data[0]["ended_at"] is None) and (conferences_data[0]["started_at"] is not None):
-                print(course["name"], "conference in progress!")
+            conference_id = latest_conference["id"]
 
-while True:
-    queryOngoingConferences()
-    time.sleep(2)
+            # and (conferences_data[0]["started_at"] is not None)
+            if (conferences_data[0]["ended_at"] is None):
+                print(course["name"], "conference in progress!")
+                conference_detected = True
+                if (conference_cache[str(course_id)] != str(conference_id)):
+                    print(conference_cache[str(course_id)], str(conference_id))
+                    conference_cache[str(course_id)] = str(conference_id)
+                    webhook = DiscordWebhook(url=WEBHOOK_URL, content="{course_name} conference in progress".format(course_name=course["name"]))
+                    webhook.execute()
+
+
+    return conference_detected
+
+try:
+    while True:
+        if not queryOngoingConferences():
+            print("No ongoing conferences found")
+        time.sleep(2)
+finally:
+    with open(CONFERENCE_CACHE_FILE, 'w') as file:
+        json.dump(conference_cache, file)
+    print("exit")
