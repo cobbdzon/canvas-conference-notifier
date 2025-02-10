@@ -3,7 +3,6 @@ import os
 import requests
 import json
 import time
-import hashlib
 from discord_webhook import DiscordWebhook
 
 load_dotenv()
