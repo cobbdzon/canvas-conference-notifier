@@ -14,8 +14,8 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 CONFERENCE_CACHE_FILE = ".conference_cache.json"
 
-COURSES_API = "https://{base_url}/api/v1/courses?per_page=100".format(base_url=CANVAS_BASE_URL)
-CONFERENCES_API = "https://{base_url}/api/v1/courses/{course_id}/conferences".format(base_url=CANVAS_BASE_URL, course_id="{course_id}")
+COURSES_API = "https://tip.instructure.com/api/v1/courses?per_page=100".format(base_url=CANVAS_BASE_URL)
+CONFERENCES_API = "https://tip.instructure.com//api/v1/courses/{course_id}/conferences".format(base_url=CANVAS_BASE_URL, course_id="{course_id}")
 
 COURSES_PARAMETERS = {
     "per_page": 100,
