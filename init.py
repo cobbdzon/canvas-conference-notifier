@@ -7,14 +7,15 @@ from discord_webhook import DiscordWebhook
 
 load_dotenv()
 
+CANVAS_BASE_URL = os.getenv("CANVAS_BASE_URL")
 CANVAS_TOKEN = os.getenv("CANVAS_TOKEN")
 USER_ID = os.getenv("USER_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 CONFERENCE_CACHE_FILE = ".conference_cache.json"
 
-COURSES_API = "https://tip.instructure.com/api/v1/courses?per_page=100"
-CONFERENCES_API = "https://tip.instructure.com/api/v1/courses/{course_id}/conferences"
+COURSES_API = "https://{base_url}/api/v1/courses?per_page=100".format(base_url=CANVAS_BASE_URL)
+CONFERENCES_API = "https://{base_url}/api/v1/courses/{course_id}/conferences".format(base_url=CANVAS_BASE_URL, course_id="{course_id}")
 
 COURSES_PARAMETERS = {
     "per_page": 100,
@@ -58,8 +59,7 @@ def queryOngoingConferences():
             latest_conference = conferences_data[0]
             conference_id = latest_conference["id"]
 
-            # and (conferences_data[0]["started_at"] is not None)
-            if (conferences_data[0]["ended_at"] is None):
+            if (conferences_data[0]["ended_at"] is None) and (conferences_data[0]["started_at"] is not None):
                 print(course["name"], "conference in progress!")
                 conference_detected = True
                 if (conference_cache[str(course_id)] != str(conference_id)):
@@ -72,6 +72,9 @@ def queryOngoingConferences():
     return conference_detected
 
 try:
+    webhook = DiscordWebhook(url=WEBHOOK_URL, content="Conference notifier started")
+    webhook.execute()
+
     while True:
         if not queryOngoingConferences():
             print("No ongoing conferences found")
@@ -79,4 +82,6 @@ try:
 finally:
     with open(CONFERENCE_CACHE_FILE, 'w') as file:
         json.dump(conference_cache, file)
-    print("exit")
+    
+    webhook = DiscordWebhook(url=WEBHOOK_URL, content="Conference notifier stopped")
+    webhook.execute()
