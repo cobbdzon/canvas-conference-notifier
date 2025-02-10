@@ -1,0 +1,5 @@
+services:
+  conferences-notifier:
+    build: .
+    container_name: conferences-notifier
+    env_file: .env

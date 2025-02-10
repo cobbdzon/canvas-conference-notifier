@@ -58,7 +58,8 @@ def queryOngoingConferences():
             latest_conference = conferences_data[0]
             conference_id = latest_conference["id"]
 
-            if (conferences_data[0]["ended_at"] is None) and (conferences_data[0]["started_at"] is not None):
+            # and (conferences_data[0]["started_at"] is not None)
+            if (conferences_data[0]["ended_at"] is None):
                 print(course["name"], "conference in progress!")
                 conference_detected = True
                 if (conference_cache[str(course_id)] != str(conference_id)):
