@@ -15,7 +15,7 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 CONFERENCE_CACHE_FILE = ".conference_cache.json"
 
 COURSES_API = "https://tip.instructure.com/api/v1/courses?per_page=100".format(base_url=CANVAS_BASE_URL)
-CONFERENCES_API = "https://tip.instructure.com//api/v1/courses/{course_id}/conferences".format(base_url=CANVAS_BASE_URL, course_id="{course_id}")
+CONFERENCES_API = "https://tip.instructure.com/api/v1/courses/{course_id}/conferences".format(base_url=CANVAS_BASE_URL, course_id="{course_id}")
 
 COURSES_PARAMETERS = {
     "per_page": 100,
@@ -50,7 +50,6 @@ def queryOngoingConferences():
         conferences_rawdata = json.loads(conference_response.text)
 
         if str(course_id) not in conference_cache:
-            print(conference_cache)
             conference_cache[str(course_id)] = ""
 
         if "conferences" in conferences_rawdata:
@@ -63,9 +62,12 @@ def queryOngoingConferences():
                 print(course["name"], "conference in progress!")
                 conference_detected = True
                 if (conference_cache[str(course_id)] != str(conference_id)):
-                    print(conference_cache[str(course_id)], str(conference_id))
                     conference_cache[str(course_id)] = str(conference_id)
-                    webhook = DiscordWebhook(url=WEBHOOK_URL, content="{course_name} conference in progress".format(course_name=course["name"]))
+
+                    course_name = course["name"]
+                    join_url = "https://tip.instructure.com/{url}/join".format(url=latest_conference["url"])
+
+                    webhook = DiscordWebhook(url=WEBHOOK_URL, content="{course_name} conference in progress. Join through this link: {join_url}".format(course_name=course_name, join_url=join_url))
                     webhook.execute()
 
 
