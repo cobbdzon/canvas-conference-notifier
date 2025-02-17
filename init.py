@@ -65,7 +65,7 @@ def queryOngoingConferences():
                     conference_cache[str(course_id)] = str(conference_id)
 
                     course_name = course["name"]
-                    join_url = "https://tip.instructure.com/{url}/join".format(url=latest_conference["url"])
+                    join_url = "https://tip.instructure.com{url}/join".format(url=latest_conference["url"])
 
                     webhook = DiscordWebhook(url=WEBHOOK_URL, content="{course_name} conference in progress. Join through this link: {join_url}".format(course_name=course_name, join_url=join_url))
                     webhook.execute()
